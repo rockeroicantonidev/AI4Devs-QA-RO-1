@@ -65,22 +65,22 @@ cd ../backend
 npm install
 ```
 3. Construye el servidor backend:
-```
+```sh
 cd backend
 npm run build
-````
-4. Inicia el servidor backend:
 ```
+4. Inicia el servidor backend:
+```sh
 cd backend
 npm start
 ```
 5. En una nueva ventana de terminal, construye el servidor frontend:
-```
+```sh
 cd frontend
 npm run build
 ```
 6. Inicia el servidor frontend:
-```
+```sh
 cd frontend
 npm start
 ```
@@ -94,7 +94,7 @@ Este proyecto usa Docker para ejecutar una base de datos PostgreSQL. Así es có
 Instala Docker en tu máquina si aún no lo has hecho. Puedes descargarlo desde aquí.
 Navega al directorio raíz del proyecto en tu terminal.
 Ejecuta el siguiente comando para iniciar el contenedor Docker:
-```
+```sh
 docker-compose up -d
 ```
 Esto iniciará una base de datos PostgreSQL en un contenedor Docker. La bandera -d corre el contenedor en modo separado, lo que significa que se ejecuta en segundo plano.
@@ -109,7 +109,7 @@ Para acceder a la base de datos PostgreSQL, puedes usar cualquier cliente Postgr
 Por favor, reemplaza User, Password y Database con el usuario, la contraseña y el nombre de la base de datos reales especificados en tu archivo .env.
 
 Para detener el contenedor Docker, ejecuta el siguiente comando:
-```
+```sh
 docker-compose down
 ```
 
@@ -120,7 +120,7 @@ Para generar la base de datos utilizando Prisma, sigue estos pasos:
 2. Abre una terminal y navega al directorio del backend donde se encuentra el archivo `schema.prisma` y `seed.ts`.
 
 3. Ejecuta los siguientes comandos para generar la estructura de prisma, las migraciones a tu base de datos y poblarla con datos de ejemplo:
-```
+```sh
 npx prisma generate
 npx prisma migrate dev
 ts-node seed.ts
@@ -159,4 +159,60 @@ POST http://localhost:3010/candidates
     }
 }
 ```
+## Pruebas End-to-End (E2E) con Cypress
 
+Esta sección describe cómo ejecutar y mantener las pruebas E2E del módulo de seguimiento de candidatos utilizando Cypress.
+
+### Ubicación y configuración de los archivos de prueba
+
+- Los archivos de prueba E2E se encuentran en:  
+  `frontend/cypress/integration/`
+- El patrón de búsqueda de specs está configurado en `cypress.config.ts`:
+  ```typescript
+  // cypress.config.ts
+  export default {
+    e2e: {
+      specPattern: 'cypress/integration/**/*.js',
+      setupNodeEvents(on, config) {
+        // implement node event listeners here
+      },
+    },
+  };
+  ```
+
+### Ejecución de pruebas
+
+1. Asegúrate de que el backend y el frontend estén corriendo en los puertos por defecto (`http://localhost:3010` y `http://localhost:3000`).
+2. Abre Cypress en modo interactivo desde el directorio `frontend`:
+   ```bash
+   npx cypress open
+   ```
+3. Selecciona el navegador y el archivo de prueba `position.spec.js` en la interfaz de Cypress.
+
+### Precondiciones para la ejecución
+
+Las pruebas requieren que el sistema esté en el siguiente estado inicial:
+- Exista la posición **Senior Full-Stack Engineer**.
+- Los candidatos **John Doe** y **Jane Smith** estén en la etapa **Technical Interview**.
+- El candidato **Carlos García** esté en la etapa **Initial Screening**.
+
+Si alguna de estas precondiciones no se cumple, las pruebas no se ejecutarán y se mostrará un error descriptivo.
+
+### Drag & Drop con react-beautiful-dnd
+
+Para simular el movimiento de candidatos entre etapas, se utiliza el plugin [`@4tw/cypress-drag-drop`](https://github.com/4teamwork/cypress-drag-drop).  
+Este plugin está instalado y configurado en el proyecto (`devDependencies` en `package.json` y la importación en `cypress/support/e2e.ts`).
+
+**Uso en las pruebas:**
+- Los elementos arrastrables y las columnas destino se identifican mediante los atributos `data-rbd-draggable-id` y `data-rbd-droppable-id`.
+- Ejemplo de uso en el test:
+  ```javascript
+  cy.get('[data-rbd-draggable-id="3"]').drag('[data-rbd-droppable-id="1"]');
+  ```
+
+### Consideraciones adicionales
+
+- Las pruebas están diseñadas para ejecutarse en entorno local y en modo Desktop.
+- No existe autenticación ni roles de usuario.
+- Si el estado inicial no es el esperado, revisa el seed de la base de datos y los datos cargados en el backend.
+- El resultado de cada prueba se valida tanto visualmente en la interfaz como mediante peticiones
